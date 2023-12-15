@@ -12,6 +12,11 @@ trait FractionTrait {
 	fn signFraction(f: Fraction) -> bool;
 	fn invertFraction(f: Fraction) -> Fraction;
 	fn changeSignFraction(f: Fraction) -> Fraction;
+	fn multiplyFraction(f1: Fraction, f2: Fraction) -> Fraction;
+	fn divideFraction(f1: Fraction, f2: Fraction) -> Fraction;
+	fn compareFraction(f1: Fraction, f2: Fraction) -> u32;
+	fn reduceFraction(f: Fraction) -> Fraction;
+	//fn approximateFraction(f: Fraction) -> Fraction;
 	
 }
 
@@ -63,6 +68,119 @@ impl FractionImpl of FractionTrait {
 		return fr;
 	}
 
+	fn multiplyFraction(f1: Fraction, f2: Fraction) -> Fraction {
+		let fr = Fraction {
+			sign: (f1.sign && f2.sign),
+			num: (f1.num * f2.num),
+			den: (f1.den * f2.den),
+		};
+		return fr;
+	}
+
+	fn divideFraction(f1: Fraction, f2: Fraction) -> Fraction {
+		let f2inv = FractionTrait::invertFraction(f2);
+		let fr = FractionTrait::multiplyFraction(f1, f2inv);
+		return fr;
+	}
+
+	fn compareFraction(f1: Fraction, f2: Fraction) -> u32 {
+		if ((f1.num == f2.num) && (f1.num == 0)){
+			return 0;
+		}
+		else {
+			if (f1.sign != f2.sign){
+				if (f1.sign){
+					return 1;
+				}
+				else {
+					return 2;
+				}
+			}
+			else {
+				
+				if ((f1.num*f2.den) > (f2.num*f1.den)){
+					if (f1.sign){
+						return 1;
+					}
+					else {
+						return 2;
+					}
+				}
+				else {
+					
+					if ((f1.num*f2.den) != (f2.num*f1.den)){
+						if (f1.sign){
+							return 2;
+						}
+						else {
+							return 1;
+						}
+					}
+					else {
+						return 0;
+					}
+					
+				}
+				
+			}
+		}
+	}
+
+	fn reduceFraction(f: Fraction) -> Fraction {
+		let mut a = f.num;
+		let mut b = f.den;
+		let mut min = 0;
+		let mut i = 2;
+		let mut gcd = 1;
+		if a > b {
+			min = b;
+		}
+		else {
+			min = a;
+		}
+		
+		loop{
+
+			if (i > min){
+				break;
+			}
+			
+			
+			if (a%i == 0) & (b%i == 0){
+				gcd = i;
+			}
+
+			i += 1;
+			
+		};
+		
+		
+		let fr = Fraction {
+			sign: f.sign,
+			num: f.num/gcd,
+			den: f.den/gcd,
+		};
+		fr
+	}
+
+	//fn approximateFraction(f: Fraction) -> Fraction {
+	//	if (f.num < 10000 && f.den < 10000) {
+	//		return f;
+	//	}
+		
+	//	else {
+	//		let apprx_num = ((u64.try_into(f.num)) * 10000)/(f.den as u64);
+	//		let fr = Fraction {
+	//			sign: f.sign,
+	//			num: apprx_num.try_into().unwrap(),
+	//			den: 10000,
+	//		};
+	//		return fr;
+	//	}
+	//	return f;
+	//}
+	
+
 	
 
 
@@ -97,7 +215,43 @@ mod tests{
 		assert (fsc.sign != f.sign, 'sign change test failed sign');
 	}
 
-	
+	#[test]
+	fn test_mul() {
+		let f1 = FractionTrait::toFraction(true, 1, 5);
+		let f2 = FractionTrait::toFraction(true, 5, 1);
+		let f = FractionTrait::multiplyFraction(f1, f2);
+		assert (f.num == f.den, 'multiplication test failed');
+	}
+
+	#[test]
+	fn test_div() {
+		let f1 = FractionTrait::toFraction(true, 6, 5);
+		let f2 = FractionTrait::toFraction(true, 5, 1);
+		let f = FractionTrait::divideFraction(f1, f2);
+		assert (f.num == 6, 'division test failed num');
+		assert (f.den == 25, 'division test failed denom');
+	}
+
+	#[test]
+	#[available_gas(1000000)]
+	fn test_reduce() {
+		let f1 = FractionTrait::toFraction(true, 2, 10);
+		let f2 = FractionTrait::reduceFraction(f1);
+
+		assert (f2.num == 1, 'reduction test failed');
+		
+	}
+
+	#[test]
+	#[available_gas(1000000)]
+	fn test_approx() {
+		//let f = FractionTrait::toFraction(true, 333333, 4444444);
+		//let fapprox = FractionTrait::approximateFraction(f);
+
+		//assert (fapprox.num == 749, 'approximation test failed');
+		
+	}
+		
 
 }
 
