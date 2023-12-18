@@ -1,3 +1,6 @@
+use core::option::OptionTrait;
+use core::traits::TryInto;
+use core::traits::Into;
 #[derive(Copy, Drop, Serde)]
 struct Fraction {
 	sign: bool,
@@ -16,7 +19,7 @@ trait FractionTrait {
 	fn divideFraction(f1: Fraction, f2: Fraction) -> Fraction;
 	fn compareFraction(f1: Fraction, f2: Fraction) -> u32;
 	fn reduceFraction(f: Fraction) -> Fraction;
-	//fn approximateFraction(f: Fraction) -> Fraction;
+	fn approximateFraction(f: Fraction) -> Fraction;
 	
 }
 
@@ -69,12 +72,72 @@ impl FractionImpl of FractionTrait {
 	}
 
 	fn multiplyFraction(f1: Fraction, f2: Fraction) -> Fraction {
-		let fr = Fraction {
-			sign: (f1.sign && f2.sign),
-			num: (f1.num * f2.num),
-			den: (f1.den * f2.den),
+		let mut an: u128 = f1.num.into();
+		let mut ad: u128 = f1.den.into();
+		let mut bn: u128 = f2.num.into();
+		let mut bd: u128 = f2.den.into();
+		let mut m = f1;
+		let mut n = f2;
+		
+
+		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
+			m = FractionTrait::approximateFraction(m);
+			n = FractionTrait::approximateFraction(n);
+		}
+
+		an = m.num.into();
+		ad = m.den.into();
+		bn = n.num.into();
+		bd = n.den.into();
+
+		
+		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
+			let mut c = Fraction{ sign: m.sign, num: m.num, den: n.den};
+			let mut d = Fraction{ sign: n.sign, num: n.num, den: m.den};
+			c = FractionTrait::approximateFraction(c);
+			d = FractionTrait::approximateFraction(d);
+			an = c.num.into();
+			ad = c.den.into();
+			bn = d.num.into();
+			bd = d.den.into();
+		}
+
+		
+		let mut ddd = (an*bn)/(ad*bd);
+		let mut factor = 1;
+		let mut i: u8 = 1;
+		loop{
+			if (i >= 5){
+				break;
+			}
+			if ddd*10 < 2000000000 {
+				factor *= 10;
+				ddd = ddd * 10;
+			}
+			i += 1;
+			
 		};
-		return fr;
+		
+		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
+			let np: u32 = ((an*bn*factor)/(ad*bd)).try_into().unwrap();
+			let factor32: u32 = factor.try_into().unwrap();
+			let fr = Fraction{
+				sign: (f1.sign == f2.sign),
+				num: np,
+				den: factor32,
+			};
+			fr
+			
+		}
+		else {
+			let fr = Fraction {
+				sign: (m.sign == n.sign),
+				num: m.num*n.num,
+				den: m.den*n.den,
+			};
+			fr
+			
+		}
 	}
 
 	fn divideFraction(f1: Fraction, f2: Fraction) -> Fraction {
@@ -146,7 +209,7 @@ impl FractionImpl of FractionTrait {
 			}
 			
 			
-			if (a%i == 0) & (b%i == 0){
+			if (a%i == 0) && (b%i == 0){
 				gcd = i;
 			}
 
@@ -163,22 +226,24 @@ impl FractionImpl of FractionTrait {
 		fr
 	}
 
-	//fn approximateFraction(f: Fraction) -> Fraction {
-	//	if (f.num < 10000 && f.den < 10000) {
-	//		return f;
-	//	}
+	fn approximateFraction(f: Fraction) -> Fraction {
+		if (f.num < 10000 && f.den < 10000) {
+			return f;
+		}
 		
-	//	else {
-	//		let apprx_num = ((u64.try_into(f.num)) * 10000)/(f.den as u64);
-	//		let fr = Fraction {
-	//			sign: f.sign,
-	//			num: apprx_num.try_into().unwrap(),
-	//			den: 10000,
-	//		};
-	//		return fr;
-	//	}
-	//	return f;
-	//}
+		else {
+			let num128: u128 = f.num.into();
+			let den128: u128 = f.den.into();
+			let apprx_num = ((num128 * 10000)/(den128));
+			let fr = Fraction {
+				sign: f.sign,
+				num: apprx_num.try_into().unwrap(),
+				den: 10000,
+			};
+			return fr;
+		}
+		
+	}
 	
 
 	
@@ -216,6 +281,7 @@ mod tests{
 	}
 
 	#[test]
+	#[available_gas(1000000)]
 	fn test_mul() {
 		let f1 = FractionTrait::toFraction(true, 1, 5);
 		let f2 = FractionTrait::toFraction(true, 5, 1);
@@ -224,6 +290,7 @@ mod tests{
 	}
 
 	#[test]
+	#[available_gas(1000000)]
 	fn test_div() {
 		let f1 = FractionTrait::toFraction(true, 6, 5);
 		let f2 = FractionTrait::toFraction(true, 5, 1);
@@ -245,10 +312,10 @@ mod tests{
 	#[test]
 	#[available_gas(1000000)]
 	fn test_approx() {
-		//let f = FractionTrait::toFraction(true, 333333, 4444444);
-		//let fapprox = FractionTrait::approximateFraction(f);
+		let f = FractionTrait::toFraction(true, 333333, 4444444);
+		let fapprox = FractionTrait::approximateFraction(f);
 
-		//assert (fapprox.num == 749, 'approximation test failed');
+		assert (fapprox.num == 749, 'approximation test failed');
 		
 	}
 		
