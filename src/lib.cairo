@@ -81,8 +81,8 @@ impl FractionImpl of FractionTrait {
 		
 
 		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
-			m = FractionTrait::approximateFraction(m);
-			n = FractionTrait::approximateFraction(n);
+			m = FractionTrait::reduceFraction(m);
+			n = FractionTrait::reduceFraction(n);
 		}
 
 		an = m.num.into();
@@ -94,8 +94,8 @@ impl FractionImpl of FractionTrait {
 		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
 			let mut c = Fraction{ sign: m.sign, num: m.num, den: n.den};
 			let mut d = Fraction{ sign: n.sign, num: n.num, den: m.den};
-			c = FractionTrait::approximateFraction(c);
-			d = FractionTrait::approximateFraction(d);
+			c = FractionTrait::reduceFraction(c);
+			d = FractionTrait::reduceFraction(d);
 			an = c.num.into();
 			ad = c.den.into();
 			bn = d.num.into();
@@ -317,6 +317,20 @@ mod tests{
 
 		assert (fapprox.num == 749, 'approximation test failed');
 		
+	}
+
+	#[test]
+	#[available_gas(10000000000000)]
+	fn test_mul_large() {
+		let f1 = FractionTrait::toFraction(true, 33333333, 5);
+		let f2 = FractionTrait::toFraction(true, 500000, 77777);
+		let m = FractionTrait::multiplyFraction(f1, f2);
+		
+		let p = m.num;
+		let q = m.den;
+		let lm = p/q;
+		assert (lm == 42857571, 'large mul test failed');
+    
 	}
 		
 
