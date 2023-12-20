@@ -1,6 +1,13 @@
 use core::option::OptionTrait;
 use core::traits::TryInto;
 use core::traits::Into;
+use core::math::egcd;
+
+	/// Helper for making a non-zero value.
+fn nz<N, +TryInto<N, NonZero<N>>>(n: N) -> NonZero<N> {
+    n.try_into().unwrap()
+}
+
 #[derive(Copy, Drop, Serde)]
 struct Fraction {
 	sign: bool,
@@ -20,6 +27,8 @@ trait FractionTrait {
 	fn compareFraction(f1: Fraction, f2: Fraction) -> u32;
 	fn reduceFraction(f: Fraction) -> Fraction;
 	fn approximateFraction(f: Fraction) -> Fraction;
+	fn addFraction(f1: Fraction, f2: Fraction) -> Fraction;
+	fn subtractFraction(f1: Fraction, f2: Fraction) -> Fraction;
 	
 }
 
@@ -189,41 +198,24 @@ impl FractionImpl of FractionTrait {
 		}
 	}
 
+
+
 	fn reduceFraction(f: Fraction) -> Fraction {
 		let mut a = f.num;
 		let mut b = f.den;
-		let mut min = 0;
-		let mut i = 2;
-		let mut gcd = 1;
-		if a > b {
-			min = b;
-		}
-		else {
-			min = a;
-		}
 		
-		loop{
+		if (a == 0 || b == 0){
+			return f;
+		}
 
-			if (i > min){
-				break;
-			}
-			
-			
-			if (a%i == 0) && (b%i == 0){
-				gcd = i;
-			}
-
-			i += 1;
-			
-		};
-		
+		let (gcd, s, t, sub_direction) = egcd(nz(a), nz(b));		
 		
 		let fr = Fraction {
 			sign: f.sign,
 			num: f.num/gcd,
 			den: f.den/gcd,
 		};
-		fr
+		return fr;
 	}
 
 	fn approximateFraction(f: Fraction) -> Fraction {
@@ -244,6 +236,153 @@ impl FractionImpl of FractionTrait {
 		}
 		
 	}
+
+	// Adds two fractions
+	fn addFraction(f1: Fraction, f2: Fraction) -> Fraction {
+		let mut an: u128 = f1.num.into();
+		let mut ad: u128 = f1.den.into();
+		let mut bn: u128 = f2.num.into();
+		let mut bd: u128 = f2.den.into();
+		let mut m = f1;
+		let mut n = f2;
+
+		if f1.sign == f2.sign {
+		
+			if ((ad*bd > 2000000000) || ((an*bd + ad*bn) > 2000000000)){
+				m = FractionTrait::reduceFraction(m);
+				n = FractionTrait::reduceFraction(n);
+			}
+			an = m.num.into();
+			ad = m.den.into();
+			bn = n.num.into();
+			bd = n.den.into();
+			if ((ad*bd > 2000000000) | ((an*bd + ad*bn) > 2000000000)){
+				let mut ddd = (an*bd + ad*bn)/(ad*bd);
+				let mut factor: u128 = 1;
+				let mut i: u8 = 5;
+				loop {
+					if (i >= 5){
+						break;
+					}
+					if ddd*10 < 2000000000 {
+						ddd *= 10;
+						factor *= 10;
+					}
+					i += 1;
+				};
+				let np: u32 = (((an*bd + ad*bn)*factor)/(ad*bd)).try_into().unwrap();
+				let factor32: u32 = factor.try_into().unwrap();
+				let fr = Fraction {
+					sign: f1.sign,
+					num: np,
+					den: factor32, 
+				};
+				return fr;
+			}
+			else {
+				let fr = Fraction {
+					sign: f1.sign,
+					num: (m.num*n.den + n.num*m.den),
+					den: m.den*n.den,
+				};
+				return fr;
+			}
+			
+			
+		}
+		else {
+
+			if ((an*bd) > (bn*ad)){
+				if ((ad*bd > 2000000000) || ((an*bd - ad*bn) > 2000000000)){
+					m = FractionTrait::reduceFraction(m);
+					n = FractionTrait::reduceFraction(n);
+				}
+				an = m.num.into();
+				ad = m.den.into();
+				bn = n.num.into();
+				bd = n.den.into();
+				if ((ad*bd > 2000000000) | ((an*bd - ad*bn) > 2000000000)){
+					let mut ddd = (an*bd - ad*bn)/(ad*bd);
+					let mut factor: u128 = 1;
+					let mut i: u8 = 1;
+					loop {
+						if (i >= 5){
+							break;
+						}
+						if ddd*10 < 2000000000 {
+							ddd *= 10;
+							factor *= 10;
+						}
+						i += 1;
+					};
+					let np: u32 = (((an*bd - ad*bn)*factor)/(ad*bd)).try_into().unwrap();
+					let factor32: u32 = factor.try_into().unwrap();
+					let fr = Fraction {
+						sign: f1.sign,
+						num: np,
+						den: factor32, 
+					};
+					fr
+				}
+				else {
+					let fr = Fraction {
+						sign: f1.sign,
+						num: (m.num*n.den - n.num*m.den),
+						den: m.den*n.den,
+					};
+					fr
+				}
+			}
+			else {
+				if ((ad*bd > 2000000000) | ((bn*ad - bd*an) > 2000000000)){
+					m = FractionTrait::reduceFraction(m);
+					n = FractionTrait::reduceFraction(n);
+				}
+				an = m.num.into();
+				ad = m.den.into();
+				bn = n.num.into();
+				bd = n.den.into();
+				if ((ad*bd > 2000000000) | ((bn*ad - bd*an) > 2000000000)){
+					let mut ddd = (bn*ad - bd*an)/(ad*bd);
+					let mut factor: u128 = 1;
+					let mut i: u8 = 1;
+					loop {
+						if (i >= 5){
+							break;
+						}
+						if ddd*10 < 2000000000 {
+							ddd *= 10;
+							factor *= 10;
+						}
+						i += 1;
+					};
+					let np: u32 = (((bn*ad - bd*an)*factor)/(ad*bd)).try_into().unwrap();
+					let factor32: u32 = factor.try_into().unwrap();
+					let fr = Fraction {
+						sign: f2.sign,
+						num: np,
+						den: factor32, 
+					};
+					fr
+				}
+				else {
+					let fr = Fraction {
+						sign: f2.sign,
+						num: (n.num*m.den - m.num*n.den),
+						den: m.den*n.den,
+					};
+					fr
+				}
+			}
+		}
+	}
+
+	fn subtractFraction(f1: Fraction, f2: Fraction) -> Fraction {
+		let f2rev = FractionTrait::changeSignFraction(f2);
+		let fr = FractionTrait::addFraction(f1, f2rev);
+		return fr;
+	}
+
 	
 
 	
@@ -320,7 +459,7 @@ mod tests{
 	}
 
 	#[test]
-	#[available_gas(10000000000000)]
+	#[available_gas(10000000000)]
 	fn test_mul_large() {
 		let f1 = FractionTrait::toFraction(true, 33333333, 5);
 		let f2 = FractionTrait::toFraction(true, 500000, 77777);
@@ -331,6 +470,48 @@ mod tests{
 		let lm = p/q;
 		assert (lm == 42857571, 'large mul test failed');
     
+	}
+
+	#[test]
+	#[available_gas(1000000)]
+	fn test_sum() {
+		let f1 = FractionTrait::toFraction(true, 3, 5);
+		let f2 = FractionTrait::toFraction(true, 2, 5);
+		let f = FractionTrait::addFraction(f1, f2);
+		assert (f.num == f.den, 'addition test failed');
+	}
+
+	#[test]
+	#[available_gas(1000000)]
+	fn test_sum_negative() {
+		let f1 = FractionTrait::toFraction(true, 3, 5);
+		let f2 = FractionTrait::toFraction(false, 1, 5);
+		let f = FractionTrait::addFraction(f1, f2);
+		let cmp = FractionTrait::compareFraction(f, FractionTrait::toFraction(true, 2,5));
+		assert (cmp == 0, 'addition test failed');
+		
+	}
+
+	#[test]
+	#[available_gas(1000000)]
+	fn test_diff() {
+		let f1 = FractionTrait::toFraction(true, 3, 5);
+		let f2 = FractionTrait::toFraction(true, 2, 5);
+		let f = FractionTrait::subtractFraction(f1, f2);
+		let cmp = FractionTrait::compareFraction(f, FractionTrait::toFraction(true, 1,5));
+		assert (cmp == 0, 'subtraction test failed');
+		
+	}
+
+	#[test]
+	#[available_gas(10000000)]
+	fn test_add_large() {
+		let f1 = FractionTrait::toFraction(true, 33333333, 5);
+		let f2 = FractionTrait::toFraction(true, 500000, 33333333);
+		let a = FractionTrait::addFraction(f1, f2);
+		
+		assert (a.num <= 2000000000, 'large add test failed');
+		assert (a.den <= 2000000000, 'large add test failed');
 	}
 		
 
