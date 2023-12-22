@@ -22,6 +22,10 @@ trait FractionTrait {
 	fn signFraction(f: Fraction) -> bool;
 	fn invertFraction(f: Fraction) -> Fraction;
 	fn changeSignFraction(f: Fraction) -> Fraction;
+	fn incrFraction(f: Fraction) -> Fraction;
+	fn decrFraction(f: Fraction) -> Fraction;
+	fn isInteger(f: Fraction) -> bool;
+	fn isNotInteger(f: Fraction) -> bool;
 	fn multiplyFraction(f1: Fraction, f2: Fraction) -> Fraction;
 	fn divideFraction(f1: Fraction, f2: Fraction) -> Fraction;
 	fn compareFraction(f1: Fraction, f2: Fraction) -> u32;
@@ -29,6 +33,8 @@ trait FractionTrait {
 	fn approximateFraction(f: Fraction) -> Fraction;
 	fn addFraction(f1: Fraction, f2: Fraction) -> Fraction;
 	fn subtractFraction(f1: Fraction, f2: Fraction) -> Fraction;
+	fn floor(f: Fraction) -> Fraction;
+	fn ceiling(f: Fraction) -> Fraction;
 	
 }
 
@@ -79,6 +85,64 @@ impl FractionImpl of FractionTrait {
 		};
 		return fr;
 	}
+
+	// Adds 1 to the fraction
+	fn incrFraction(f: Fraction) -> Fraction {
+		let inc = Fraction {
+			sign: true,
+			num: 1,
+			den: 1,
+		};
+		let fr = FractionTrait::addFraction(f, inc);
+		fr
+	}
+
+
+	// Subtracts 1 from the fraction
+	fn decrFraction(f: Fraction) -> Fraction {
+		let dec = Fraction {
+			sign: true,
+			num: 1,
+			den: 1,
+		};
+		let fr = FractionTrait::subtractFraction(f, dec);
+		fr
+	}
+
+
+	// Returns true if the fraction can be represented as an Integer
+	fn isInteger(f: Fraction) -> bool {
+		if f.num == 0 {
+			true
+		}
+		else {
+			if (f.num % f.den == 0) {
+				true
+			}
+			else {
+				false
+			}
+		}
+		
+	}
+
+
+	// Returns true if the fraction can NOT be represented as an Integer
+	fn isNotInteger(f: Fraction) -> bool {
+		if f.num == 0 {
+			false
+		}
+		else {
+			if (f.num % f.den == 0) {
+				false
+			}
+			else {
+				true
+			}
+		}
+		
+	}
+
 
 	fn multiplyFraction(f1: Fraction, f2: Fraction) -> Fraction {
 		let mut an: u128 = f1.num.into();
@@ -383,6 +447,70 @@ impl FractionImpl of FractionTrait {
 		return fr;
 	}
 
+	// Returns the closest but smaller Integer to the Given Fraction, but typecast to Fraction for convenience
+	fn floor(f: Fraction) -> Fraction {
+		let q = f.num/f.den;
+		if (q * f.den == f.num){
+			let fr = Fraction{
+				sign: f.sign,
+				num: f.num,
+				den: f.den,
+			};
+			return fr;
+		}
+		else {
+			if f.sign {
+				let fr = Fraction{
+					sign: f.sign,
+					num: q,
+					den: 1,
+				};
+				return fr;    
+			}
+			else {
+				let fr = Fraction{
+					sign: f.sign,
+					num: q + 1,
+					den: 1,
+				};
+				return fr; 
+			}
+			
+		}
+	}
+
+	// Returns the closest but greater Integer to the Given Fraction, but typecast to Fraction for convenience
+	fn ceiling(f: Fraction) -> Fraction {
+		let q = f.num/f.den;
+		if (q * f.den == f.num){
+			let fr = Fraction{
+				sign: f.sign,
+				num: f.num,
+				den: f.den,
+			};
+			return fr;
+		}
+		else {
+			if f.sign {
+				let fr = Fraction{
+					sign: f.sign,
+					num: q + 1,
+					den: 1,
+				};
+				return fr;    
+			}
+			else {
+				let fr = Fraction{
+					sign: f.sign,
+					num: q,
+					den: 1,
+				};
+				return fr; 
+			}
+			
+		}
+	}
+
 	
 
 	
@@ -512,6 +640,39 @@ mod tests{
 		
 		assert (a.num <= 2000000000, 'large add test failed');
 		assert (a.den <= 2000000000, 'large add test failed');
+	}
+
+	#[test]
+	fn test_floor() {
+		let f = FractionTrait::toFraction(true, 7, 5);
+		let fl = FractionTrait::floor(f);
+		assert (fl.num == 1, 'floor test failed');
+		assert (fl.den == 1, 'floor test failed');
+	}
+
+	#[test]
+	fn test_floor2() {
+		let f = FractionTrait::toFraction(false, 12, 5);
+		let fl = FractionTrait::floor(f);
+		assert (fl.num == 3, 'floor test failed');
+		assert (fl.den == 1, 'floor test failed');
+	}
+
+
+	#[test]
+	fn test_ceiling() {
+		let f = FractionTrait::toFraction(true, 7, 5);
+		let ce = FractionTrait::ceiling(f);
+		assert (ce.num == 2, 'ceiling test failed');
+		assert (ce.den == 1, 'ceiling test failed');
+	}
+
+	#[test]
+	fn test_ceiling2() {
+		let f = FractionTrait::toFraction(false, 12, 5);
+		let ce = FractionTrait::ceiling(f);
+		assert (ce.num == 2, 'ceiling test failed');
+		assert (ce.den == 1, 'ceiling test failed');
 	}
 		
 
