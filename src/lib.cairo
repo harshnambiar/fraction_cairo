@@ -320,10 +320,10 @@ impl FractionImpl of FractionTrait {
 			ad = m.den.into();
 			bn = n.num.into();
 			bd = n.den.into();
-			if ((ad*bd > 2000000000) | ((an*bd + ad*bn) > 2000000000)){
+			if ((ad*bd > 2000000000) || ((an*bd + ad*bn) > 2000000000)){
 				let mut ddd = (an*bd + ad*bn)/(ad*bd);
 				let mut factor: u128 = 1;
-				let mut i: u8 = 5;
+				let mut i: u8 = 1;
 				loop {
 					if (i >= 5){
 						break;
@@ -398,7 +398,7 @@ impl FractionImpl of FractionTrait {
 				}
 			}
 			else {
-				if ((ad*bd > 2000000000) | ((bn*ad - bd*an) > 2000000000)){
+				if ((ad*bd > 2000000000) || ((bn*ad - bd*an) > 2000000000)){
 					m = FractionTrait::reduceFraction(m);
 					n = FractionTrait::reduceFraction(n);
 				}
